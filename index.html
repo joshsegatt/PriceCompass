@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Price Compass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Sora', 'sans-serif'],
+            },
+            colors: {
+              'canvas': '#F5F5F7',
+              'navy-dark': '#0F172A',
+              'navy-heading': '#111827',
+              'slate-body': '#475569',
+              'apple-grey': '#1D1D1F',
+              'tech-blue': '#0071E3',
+              'emerald-save': '#10B981',
+            },
+            boxShadow: {
+              'soft': '0 8px 32px 0 rgba(0, 0, 0, 0.07)',
+              // Refined luxe shadows for a softer, more Apple-like feel
+              'luxe': '0 12px 28px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04)',
+              'luxe-hover': '0 18px 45px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.07)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* --- UNIFIED GRADIENT BUTTON (DARKER & MORE SOPHISTICATED) --- */
+      .btn-gradient {
+        background-image: linear-gradient(to right, #005fbd, #0d9488); /* Darker blue to darker teal */
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+                    0 4px 8px rgba(0,0,0,0.15);
+        transition: all 0.3s ease-in-out;
+      }
+      .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+                    0 10px 20px rgba(0, 95, 189, 0.2); /* Darker, more subtle glow */
+        filter: brightness(1.1);
+      }
+      .btn-gradient:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15),
+                    inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+        filter: none;
+      }
+
+      /* --- CINEMATIC HERO START (PERFORMANCE OPTIMIZED) --- */
+      /* The main background is now static. The animation is handled by hardware-accelerated pseudo-elements. */
+      .hero-cinematic {
+        position: relative;
+        overflow: hidden;
+        background: #0c0a1a; /* Fallback */
+        background: linear-gradient(125deg, #0f172a, #134e4a, #0f172a); 
+        /* CSS Vars for mouse parallax */
+        --mouse-x: 0;
+        --mouse-y: 0;
+      }
+      
+      .hero-cinematic::before, .hero-cinematic::after {
+        content: '';
+        position: absolute;
+        will-change: transform, opacity;
+        transition: transform 0.2s ease-out;
+      }
+
+      .hero-cinematic::before {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, #3b82f6, transparent 70%);
+        top: 5%;
+        left: 0%;
+        filter: blur(100px);
+        animation: blob-move-1 30s infinite alternate ease-in-out;
+      }
+
+      .hero-cinematic::after {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, #10b981, transparent 70%);
+        bottom: 0%;
+        right: -10%;
+        filter: blur(120px);
+        animation: blob-move-2 35s infinite alternate ease-in-out;
+        animation-delay: -5s;
+      }
+      
+      /* New performant animations using hardware-accelerated transform and opacity */
+      @keyframes blob-move-1 {
+        from {
+          transform: translate(calc(var(--mouse-x) * -20px), calc(var(--mouse-y) * -20px)) rotate(0deg) scale(1);
+          opacity: 0.3;
+        }
+        to {
+          transform: translate(calc(var(--mouse-x) * -20px) + 150px, calc(var(--mouse-y) * -20px) - 50px) rotate(90deg) scale(1.2);
+          opacity: 0.4;
+        }
+      }
+      @keyframes blob-move-2 {
+        from {
+          transform: translate(calc(var(--mouse-x) * -20px), calc(var(--mouse-y) * -20px)) rotate(0deg) scale(1);
+          opacity: 0.4;
+        }
+        to {
+          transform: translate(calc(var(--mouse-x) * -20px) - 100px, calc(var(--mouse-y) * -20px) + 80px) rotate(-90deg) scale(0.9);
+          opacity: 0.25;
+        }
+      }
+
+      .hero-3d-scene {
+        perspective: 1500px;
+      }
+      
+      .stream-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        will-change: transform;
+        transition: transform 0.2s ease-out;
+        transform: rotateY(calc(var(--mouse-x) * 15deg)) rotateX(calc(var(--mouse-y) * -15deg));
+      }
+
+      .stream-column {
+        position: absolute;
+        top: -50%; /* Start off-screen */
+        width: 220px;
+        transform-style: preserve-3d;
+        animation-name: animate-stream;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+      
+      @keyframes animate-stream {
+        from { transform: translateY(0); }
+        to { transform: translateY(-50%); } /* Animates to half its height (since items are duplicated) */
+      }
+      
+      .stream-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        font-family: 'Inter', sans-serif;
+        color: white;
+        will-change: transform;
+      }
+      .stream-item img {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: white;
+      }
+      .stream-item .provider { font-weight: 600; font-size: 0.9rem; }
+      .stream-item .price { font-size: 0.8rem; opacity: 0.8; }
+      .stream-item .tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .tag-green { background: #10B981; color: white; }
+      .tag-blue { background: #0071E3; color: white; }
+
+      /* --- CINEMATIC HERO END --- */
+
+      /* --- DASHBOARD SHOWCASE START (FULLY ANIMATED) --- */
+      .dashboard-deconstructed-scene {
+        perspective: 2500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 600px;
+        position: relative;
+      }
+
+      .dashboard-deconstructed-panel {
+        position: relative;
+        width: 850px;
+        height: 550px;
+        transform-style: preserve-3d;
+        will-change: transform;
+        transition: transform 0.5s cubic-bezier(.23,1,.32,1);
+        transform: rotateX(15deg); /* Initial rotation */
+      }
+      
+      .widget-float {
+        position: absolute;
+        border-radius: 16px;
+        background: rgba(30, 41, 59, 0.4); /* slate-800/40 */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        padding: 1.5rem;
+        color: white;
+        will-change: transform;
+        animation: widget-float-subtle 10s infinite alternate ease-in-out;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+      }
+      
+      @keyframes widget-float-subtle {
+        from { transform: var(--transform-start); }
+        to { transform: var(--transform-end); }
+      }
+
+      /* Animated Graph & Values */
+      .chart-line {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: draw-chart-line 6s infinite linear;
+      }
+      .graph-point {
+        animation: graph-point-pulse 1.5s infinite alternate ease-in-out;
+      }
+      @keyframes draw-chart-line { to { stroke-dashoffset: 0; } }
+      @keyframes graph-point-pulse {
+        from { r: 3; opacity: 0.5; }
+        to { r: 6; opacity: 1; transform: scale(1.1); }
+      }
+      
+      .animate-value-update {
+        animation: value-update 0.4s ease-out;
+      }
+      @keyframes value-update {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.08); opacity: 0.8; color: #34d399; } /* emerald-400 */
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+
+      /* Bill Scroll Animation */
+      .bill-scroll-wrapper {
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+        mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+      }
+      .bill-scroll-inner {
+        animation: bill-scroll 25s infinite linear;
+      }
+      @keyframes bill-scroll {
+        from { transform: translateY(0); }
+        to { transform: translateY(-50%); }
+      }
+
+      /* Shimmer effect for Premium CTA widget */
+      .shimmer-wrapper {
+        position: relative;
+        overflow: hidden;
+      }
+      .shimmer-effect {
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.3), transparent);
+        animation: shimmer-effect 3.5s infinite ease-in-out;
+        animation-delay: 1s;
+      }
+      @keyframes shimmer-effect {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(250%); }
+      }
+      
+      /* Premium Widget Animations */
+       @keyframes savings-item-fade {
+        0%, 100% { opacity: 0; transform: translateY(10px); }
+        20%, 80% { opacity: 1; transform: translateY(0); }
+      }
+       @keyframes trend-bar-grow {
+        from { transform: scaleY(0.1); }
+        to { transform: scaleY(1); }
+      }
+      /* --- DASHBOARD SHOWCASE END --- */
+
+
+      /* --- HERO TEXT ANIMATION --- */
+      @keyframes text-fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        opacity: 0;
+        animation: text-fade-in-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+
+      /* --- MODAL ANIMATIONS --- */
+      @keyframes modal-fade-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes modal-fade-out {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.95); }
+      }
+      @keyframes backdrop-fade-in {
+        from { background-color: rgba(0,0,0,0); }
+        to { background-color: rgba(0,0,0,0.5); }
+      }
+      @keyframes backdrop-fade-out {
+        from { background-color: rgba(0,0,0,0.5); }
+        to { background-color: rgba(0,0,0,0); }
+      }
+      .modal-content-in { animation: modal-fade-in 0.2s ease-out forwards; }
+      .modal-content-out { animation: modal-fade-out 0.2s ease-out forwards; }
+      .modal-backdrop-in { animation: backdrop-fade-in 0.2s ease-out forwards; }
+      .modal-backdrop-out { animation: backdrop-fade-out 0.2s ease-out forwards; }
+
+      /* --- PRODUCT GRID ANIMATION --- */
+      @keyframes card-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .animate-card-slide-in {
+        opacity: 0;
+        animation: card-slide-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+
+      /* --- BILL ITEM ANIMATION --- */
+      @keyframes bill-item-fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-bill-item-fade-in {
+        opacity: 0;
+        animation: bill-item-fade-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-canvas">
+    <div id="root"></div>
+  </body>
+</html>
