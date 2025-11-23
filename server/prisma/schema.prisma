@@ -1,0 +1,52 @@
+// Test datasource for sqlite ephemeral tests
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  password          String
+  isPremium         Boolean         @default(false)
+  stripeCustomerId  String?         @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  trackedBills      TrackedBill[]
+  savingsGoals      SavingsGoal[]
+  plaidAccounts     PlaidAccount[]
+}
+
+model TrackedBill {
+  id           String       @id @default(uuid())
+  category     String
+  provider     String
+  name         String
+  monthlyCost  Decimal
+  dueDate      DateTime
+  status       String @default("active")
+  source       String?
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+}
+
+model SavingsGoal {
+  id             String   @id @default(uuid())
+  name           String
+  targetAmount   Decimal
+  currentAmount  Decimal @default(0)
+  deadline       DateTime
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+}
+
+model PlaidAccount {
+  id          String   @id @default(uuid())
+  accessToken String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+}

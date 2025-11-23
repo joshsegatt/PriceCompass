@@ -1,229 +1,137 @@
 
 import { User, TrackedBill, KanbanStatus, SavingsGoal } from '../types';
 
-const NETWORK_LATENCY = 500; // ms
-
 class ApiService {
-  
+  // If VITE_API_BASE_URL is set (e.g. dev), use it. Otherwise empty string means relative path (same origin)
+  private baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
+  private getToken(): string | null {
+    return sessionStorage.getItem('jwt');
+  }
+
+  private async request(path: string, opts: RequestInit = {}) {
+    const headers: Record<string, string> = {};
+    if (opts.body) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${this.baseUrl}${path}`, { ...opts, headers });
+    if (!res.ok) {
+      let errMsg = `Request failed: ${res.status}`;
+      try {
+        const errData = await res.json();
+        errMsg = errData.message || JSON.stringify(errData);
+      } catch (e) {
+        try {
+          errMsg = await res.text();
+        } catch (e2) { }
+      }
+      throw new Error(errMsg);
+    }
+
+    if (res.status === 204) return null;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return res.json();
+    }
+    return res.text();
+  }
+
   // --- USER & AUTH ---
 
   async checkSession(): Promise<User> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const sessionEmail = sessionStorage.getItem('priceCompassSession');
-        if (!sessionEmail) {
-          return reject(new Error('No active session'));
-        }
-        const users = this._getUsers();
-        const user = users.find(u => u.email === sessionEmail);
-        if (user) {
-          resolve(this._runBillStatusAI(user));
-        } else {
-          reject(new Error('Session user not found'));
-        }
-      }, NETWORK_LATENCY / 2);
-    });
+    const token = this.getToken();
+    if (!token) throw new Error('No active session');
+    const data = await this.request('/user/me', { method: 'GET' });
+    return data as User;
   }
 
   async register(email: string, password: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = this._getUsers();
-        if (users.some(u => u.email === email)) {
-          return reject(new Error('An account with this email already exists.'));
-        }
-        const newUser: User = { email, password, isPremium: false, trackedBills: [], savingsGoals: [] };
-        const updatedUsers = [...users, newUser];
-        this._saveUsers(updatedUsers);
-        sessionStorage.setItem('priceCompassSession', newUser.email);
-        resolve(newUser);
-      }, NETWORK_LATENCY);
+    const data = await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
+    const { user, token } = data as { user: User; token: string };
+    if (token) sessionStorage.setItem('jwt', token);
+    return user;
   }
 
   async login(email: string, password: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = this._getUsers();
-        const user = users.find(u => u.email === email && u.password === password);
-        if (user) {
-          sessionStorage.setItem('priceCompassSession', user.email);
-          resolve(this._runBillStatusAI(user));
-        } else {
-          reject(new Error('Invalid email or password.'));
-        }
-      }, NETWORK_LATENCY);
+    const data = await this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
+    const { user, token } = data as { user: User; token: string };
+    if (token) sessionStorage.setItem('jwt', token);
+    return user;
   }
 
   async socialLogin(provider: 'google'): Promise<User> {
-     return new Promise((resolve) => {
-      setTimeout(() => {
-        const socialEmail = 'google-user@example.com';
-        let users = this._getUsers();
-        let user = users.find(u => u.email === socialEmail);
-        if (!user) {
-          user = { email: socialEmail, isPremium: false, trackedBills: [], savingsGoals: [] };
-          users.push(user);
-          this._saveUsers(users);
-        }
-        sessionStorage.setItem('priceCompassSession', user.email);
-        resolve(this._runBillStatusAI(user));
-      }, NETWORK_LATENCY * 2);
+    // The backend expects an OAuth code exchange; frontend should supply the code
+    // after an OAuth flow. This method attempts a POST to /auth/google with an
+    // (empty) code — callers should replace with a real code when available.
+    const data = await this.request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ code: '' }),
     });
-  }
-  
-  async logout(): Promise<void> {
-    return new Promise(resolve => {
-        sessionStorage.removeItem('priceCompassSession');
-        resolve();
-    });
+    const { user, token } = data as { user: User; token: string };
+    if (token) sessionStorage.setItem('jwt', token);
+    return user;
   }
 
-  async fetchUserData(email: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const users = this._getUsers();
-            const user = users.find(u => u.email === email);
-            if (user) {
-                resolve(this._runBillStatusAI(user));
-            } else {
-                reject(new Error("User not found during data fetch."));
-            }
-        }, NETWORK_LATENCY / 2);
-    });
+  async logout(): Promise<void> {
+    sessionStorage.removeItem('jwt');
   }
-  
+
+  async fetchUserData(_email?: string): Promise<User> {
+    // backend exposes GET /user/me for the current authenticated user
+    const data = await this.request('/user/me', { method: 'GET' });
+    return data as User;
+  }
+
   async updateUser(userToUpdate: User): Promise<User> {
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              const users = this._getUsers();
-              const updatedUsers = users.map(u => u.email === userToUpdate.email ? userToUpdate : u);
-              this._saveUsers(updatedUsers);
-              resolve(userToUpdate);
-          }, NETWORK_LATENCY / 3);
-      });
+    // Backend does not currently expose a user update endpoint in the contract
+    // but attempt a PUT to /user/me to support updates if implemented server-side.
+    const data = await this.request('/user/me', {
+      method: 'PUT',
+      body: JSON.stringify(userToUpdate),
+    });
+    return data as User;
   }
 
   // --- DATA MANIPULATION ---
 
-  async addBill(userEmail: string, bill: Omit<TrackedBill, 'id'>): Promise<TrackedBill> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newBill = { ...bill, id: new Date().toISOString() };
-        const users = this._getUsers();
-        const updatedUsers = users.map(u => {
-          if (u.email === userEmail) {
-            return { ...u, trackedBills: [...u.trackedBills, newBill] };
-          }
-          return u;
-        });
-        this._saveUsers(updatedUsers);
-        resolve(newBill);
-      }, NETWORK_LATENCY);
+  async addBill(_userEmail: string, bill: Omit<TrackedBill, 'id'>): Promise<TrackedBill> {
+    const data = await this.request('/bills', { method: 'POST', body: JSON.stringify(bill) });
+    return data as TrackedBill;
+  }
+
+  async updateBill(_userEmail: string, updatedBill: TrackedBill): Promise<TrackedBill> {
+    const data = await this.request(`/bills/${encodeURIComponent(updatedBill.id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updatedBill),
     });
+    return data as TrackedBill;
   }
 
-  async updateBill(userEmail: string, updatedBill: TrackedBill): Promise<TrackedBill> {
-     return new Promise((resolve) => {
-        setTimeout(() => {
-            const users = this._getUsers();
-            const updatedUsers = users.map(u => {
-                if (u.email === userEmail) {
-                    const bills = u.trackedBills.map(b => b.id === updatedBill.id ? updatedBill : b);
-                    return { ...u, trackedBills: bills };
-                }
-                return u;
-            });
-            this._saveUsers(updatedUsers);
-            resolve(updatedBill);
-        }, NETWORK_LATENCY);
-    });
+  async deleteBill(_userEmail: string, billId: string): Promise<void> {
+    await this.request(`/bills/${encodeURIComponent(billId)}`, { method: 'DELETE' });
+    return;
   }
 
-  async deleteBill(userEmail: string, billId: string): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const users = this._getUsers();
-        const updatedUsers = users.map(u => {
-          if (u.email === userEmail) {
-            const bills = u.trackedBills.filter(b => b.id !== billId);
-            return { ...u, trackedBills: bills };
-          }
-          return u;
-        });
-        this._saveUsers(updatedUsers);
-        resolve();
-      }, NETWORK_LATENCY);
-    });
-  }
-  
-  async addSavingsGoal(userEmail: string, goal: Omit<SavingsGoal, 'id'>): Promise<SavingsGoal> {
-     return new Promise((resolve) => {
-      setTimeout(() => {
-        const newGoal = { ...goal, id: new Date().toISOString() };
-        const users = this._getUsers();
-        const updatedUsers = users.map(u => {
-          if (u.email === userEmail) {
-            return { ...u, savingsGoals: [...(u.savingsGoals || []), newGoal] };
-          }
-          return u;
-        });
-        this._saveUsers(updatedUsers);
-        resolve(newGoal);
-      }, NETWORK_LATENCY);
-    });
+  async addSavingsGoal(_userEmail: string, goal: Omit<SavingsGoal, 'id'>): Promise<SavingsGoal> {
+    const data = await this.request('/savings', { method: 'POST', body: JSON.stringify(goal) });
+    return data as SavingsGoal;
   }
 
-  async upgradeToPremium(userEmail: string): Promise<User> {
-      return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            const users = this._getUsers();
-            let updatedUser: User | null = null;
-            const updatedUsers = users.map(u => {
-                if(u.email === userEmail) {
-                    updatedUser = { ...u, isPremium: true };
-                    return updatedUser;
-                }
-                return u;
-            });
-            this._saveUsers(updatedUsers);
-            if (updatedUser) {
-                resolve(updatedUser);
-            } else {
-                reject(new Error("User not found for premium upgrade."));
-            }
-          }, NETWORK_LATENCY);
-      });
-  }
-
-  // --- PRIVATE HELPERS ---
-
-  private _getUsers(): User[] {
-    try {
-      const savedUsersJSON = localStorage.getItem('priceCompassUsersDB');
-      return savedUsersJSON ? JSON.parse(savedUsersJSON) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private _saveUsers(users: User[]) {
-    localStorage.setItem('priceCompassUsersDB', JSON.stringify(users));
-  }
-  
-  private _runBillStatusAI(user: User): User {
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const updatedBills = user.trackedBills.map(bill => {
-          if(bill.status === KanbanStatus.Paid) return bill;
-          const dueDate = new Date(bill.dueDate);
-          if (dueDate < today) {
-              return {...bill, status: KanbanStatus.Overdue};
-          }
-          return bill;
-      });
-      return {...user, trackedBills: updatedBills};
+  async upgradeToPremium(_userEmail: string): Promise<{ sessionId: string } | null> {
+    // Start a Stripe checkout session; backend returns { sessionId }
+    const data = await this.request('/billing/create-checkout-session', { method: 'POST' });
+    return data as { sessionId: string } | null;
   }
 }
 

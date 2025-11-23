@@ -1,0 +1,9 @@
+name: CI-disabled
+
+# GitHub Actions have been intentionally disabled per project owner request.
+# There are no triggers or jobs defined here. Deployment is expected to be
+# handled directly by Render (backend) and Vercel (frontend) or via manual CLI.
+
+on: []
+
+jobs: {}
