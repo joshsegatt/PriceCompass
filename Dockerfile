@@ -10,6 +10,7 @@ RUN npm run build
 FROM node:18-alpine AS backend-builder
 WORKDIR /app-backend
 COPY server/package*.json ./
+RUN apk add --no-cache openssl
 RUN npm ci
 COPY server/ .
 RUN npx prisma generate --schema=prisma/schema.prisma
@@ -19,6 +20,7 @@ RUN npm run build
 FROM node:18-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 
 # Copy backend production deps
 COPY server/package*.json ./
