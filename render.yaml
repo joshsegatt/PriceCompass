@@ -1,0 +1,44 @@
+# Render service + managed Postgres definition (informational).
+# Fill secrets in the Render dashboard after creating the service.
+
+services:
+  - type: web
+    name: pricecompass-backend
+    repo: https://github.com/joshsegatt/PriceCompass
+    branch: main
+    env: docker
+    plan: free
+    autoDeploy: true
+    dockerBuild:
+      dockerfilePath: server/Dockerfile
+      buildContext: .
+    envVars:
+      - key: DATABASE_URL
+        scope: ENVIRONMENT
+      - key: JWT_SECRET
+        scope: ENVIRONMENT
+      - key: STRIPE_SECRET_KEY
+        scope: ENVIRONMENT
+      - key: STRIPE_WEBHOOK_SECRET
+        scope: ENVIRONMENT
+      - key: STRIPE_PRICE_ID
+        scope: ENVIRONMENT
+      - key: PLAID_CLIENT_ID
+        scope: ENVIRONMENT
+      - key: PLAID_SECRET
+        scope: ENVIRONMENT
+      - key: PLAID_ENV
+        scope: ENVIRONMENT
+      - key: VITE_API_BASE_URL
+        scope: ENVIRONMENT
+
+databases:
+  - name: pricecompass-db
+    plan: starter
+    engine: postgres
+
+# Notes:
+# 1) After creating the managed Postgres on Render, set the DATABASE_URL env var
+#    for the service to the connection string Render provides.
+# 2) Use `npx prisma migrate deploy` once after deploy to run migrations, or
+#    call `npx prisma db push` if you prefer schema sync without migrations.
