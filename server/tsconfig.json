@@ -7,26 +7,17 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "es2019",
-    {
-      "compilerOptions": {
-        "module": "commonjs",
-        "declaration": true,
-        "removeComments": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "es2019",
-        "sourceMap": true,
-        "outDir": "dist",
-        "rootDir": "src",
-        "incremental": true,
-        "skipLibCheck": true
-      },
-      "exclude": [
-        "node_modules",
-        "dist",
-        "test",
-        "jest.config.ts",
-        "**/*.spec.ts"
-      ]
-    }
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "incremental": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "jest.config.ts",
+    "**/*.spec.ts"
+  ]
+}
