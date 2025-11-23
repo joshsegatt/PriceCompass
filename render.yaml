@@ -10,7 +10,7 @@ services:
     plan: free
     autoDeploy: true
     dockerBuild:
-      dockerfilePath: server/Dockerfile
+      dockerfilePath: Dockerfile
       buildContext: .
     envVars:
       - key: DATABASE_URL
@@ -20,6 +20,14 @@ services:
       - key: STRIPE_SECRET_KEY
         scope: ENVIRONMENT
       - key: STRIPE_WEBHOOK_SECRET
+        scope: ENVIRONMENT
+      - key: STRIPE_PRICE_ID
+        scope: ENVIRONMENT
+      - key: PLAID_CLIENT_ID
+        scope: ENVIRONMENT
+      - key: PLAID_SECRET
+        scope: ENVIRONMENT
+      - key: PLAID_ENV
         scope: ENVIRONMENT
 
 # Notes:
