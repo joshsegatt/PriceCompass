@@ -1,25 +1,39 @@
-# PriceCompass 🧭
+# PriceCompass
 
-**Your Personal Financial Navigator**
+Track household bills, compare UK plans, and keep savings goals in one board.
 
-PriceCompass is a powerful, intuitive application designed to help you take control of your financial life. From tracking monthly bills to setting and achieving ambitious savings goals, PriceCompass provides the clarity and tools you need to build a secure financial future.
+[Live demo](https://price-compass-teal.vercel.app)
 
-## Key Features
+PriceCompass is a personal-finance workspace for recurring costs — broadband, energy, mobile, insurance, credit — plus a catalogue of plans and a simple savings tracker. Built as a TypeScript app with a NestJS / Prisma API.
 
--   **📊 Smart Dashboard**: Get a bird's-eye view of your financial health with real-time insights.
--   **💸 Bill Tracking**: Never miss a payment again. Organize, track, and manage all your recurring expenses in one place.
--   **🎯 Savings Goals**: Define your dreams and track your progress towards them with dedicated savings buckets.
--   **🔒 Bank-Grade Security**: Your data is protected with industry-standard encryption and secure authentication.
--   **💳 Seamless Integrations**: Connect directly with your financial institutions for automated tracking (powered by Plaid and Stripe).
+## What you can do
 
----
+- Dashboard of monthly burn and upcoming payments
+- Bill board with Upcoming / Paid / Overdue
+- Catalogue by category (broadband, energy, insurance, mobile, loans, cards, mortgages)
+- Savings goals with target, current amount, deadline
+- Account + premium flag for paid features
 
-## ⚠️ Copyright & License Notice
+## Stack
 
-**© 2025 PriceCompass. All Rights Reserved.**
+| Layer | |
+| --- | --- |
+| App | React, Vite, TypeScript |
+| API | NestJS |
+| Data | Prisma, PostgreSQL |
+| Ship | Vercel, Docker |
 
-This software and its associated documentation are the proprietary property of PriceCompass.
+## Local
 
-**Unauthorized copying, distribution, modification, public display, or use of this software, in whole or in part, via any medium is strictly prohibited without the express written permission of the copyright holder.**
+```bash
+git clone https://github.com/joshsegatt/PriceCompass.git
+cd PriceCompass
+npm install
+npm run dev
+```
 
-This project is closed-source and intended for authorized use only. Any infringement will be pursued to the fullest extent of the law.
+API and env details live next to `server/` and `.env` files in the repo. Do not commit secrets.
+
+## License
+
+Proprietary. The public repo is a product showcase, not a license to reuse the code in another commercial product.
