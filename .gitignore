@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Build artifacts
+.next/
+next/.next/
+node_modules/
+dist/
